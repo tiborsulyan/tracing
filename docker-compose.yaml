@@ -1,0 +1,63 @@
+version: "3"
+
+networks:
+  tracing:
+
+services:
+  traefik:
+    image: traefik:v3.0
+    hostname: traefik
+    command:
+      - "--log.level=DEBUG"
+      - "--accesslog=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.tracingapp.address=:8083"
+      - "--tracing.openTelemetry=true"
+      - "--tracing.openTelemetry.address=jaeger:4318"
+      - "--tracing.openTelemetry.insecure=true"
+      # traefik configuration file should contain only the TLS cert. and key file paths
+      # do not set the file path for http
+      #- "--providers.file.filename=/traefik/config.yml"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    ports:
+      - "8083:8083"
+      - "8080:8080"
+    networks:
+      - tracing
+
+  servicea:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.servicea.rule=Path(`/a`)"
+      - "traefik.http.routers.servicea.entrypoints=tracingapp"
+      - "traefik.http.routers.servicea.priority=2"
+      - "traefik.http.services.servicea.loadbalancer.server.port=8080"
+    build:
+      context: ./cmd/servicea/.
+    expose:
+      - "8080"
+    networks:
+      - tracing
+
+  serviceb:
+    build:
+      context: ./cmd/serviceb/.
+    expose:
+      - "8080"
+    networks:
+      - tracing
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    hostname: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    expose:
+      - "4317"
+      - "4318"
+    ports:
+      - "16686:16686"
+    networks:
+      - tracing
