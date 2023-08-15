@@ -1,6 +1,6 @@
 build:
-	go build -o ./cmd/servicea ./cmd/servicea
-	go build -o ./cmd/serviceb ./cmd/serviceb
+	go build -tags netgo,osusergo -gcflags '-N -l' -v -o ./cmd/servicea ./cmd/servicea
+	go build -tags netgo,osusergo -gcflags '-N -l' -v -o ./cmd/serviceb ./cmd/serviceb
 
 build.docker: build
 	docker compose build
@@ -10,3 +10,6 @@ start:
 
 stop:
 	docker compose down
+
+clean:
+	rm -f ./cmd/servicea/servicea ./cmd/serviceb/serviceb

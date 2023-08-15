@@ -28,14 +28,15 @@ services:
       - tracing
 
   servicea:
+    build:
+      context: ./cmd/servicea/.
+    hostname: servicea
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.servicea.rule=Path(`/a`)"
       - "traefik.http.routers.servicea.entrypoints=tracingapp"
       - "traefik.http.routers.servicea.priority=2"
       - "traefik.http.services.servicea.loadbalancer.server.port=8080"
-    build:
-      context: ./cmd/servicea/.
     expose:
       - "8080"
     networks:
@@ -44,6 +45,7 @@ services:
   serviceb:
     build:
       context: ./cmd/serviceb/.
+    hostname: serviceb
     expose:
       - "8080"
     networks:
